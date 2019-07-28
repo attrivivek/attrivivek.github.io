@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+    body {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+
+    .x.axis path {
+        display: none;
+    }
+
+    .line {
+        fill: none;
+        /*stroke: steelblue;*/
+        stroke: steelblue;
+        stroke-width: 2px;
+    }
+
+    .overlay {
+        fill: none;
+        pointer-events: all;
+    }
+
+    .focus circle {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 1px;
+    }
+
+    svg {
+        border: solid 1px blue;
+    }
+</style>
+<body>
+<div id="chart1">
+<button id="start" style="position: absolute; margin-left: 6px; margin-top: 6px;">Fed Rate Change</button>
+<button id="reset" style="position: absolute; margin-left: 150px; margin-top: 6px">Clear</button>
+<p style="position: absolute; margin-left: 212px; margin-top: 12px; text-size: 12px">Hover over line to see values</p>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+<script>
+
+    var margin = {top: 60, right: 20, bottom: 30, left: 50},
+        width = 700 - margin.left - margin.right,
+        height = 365 - margin.top - margin.bottom;
+
+    // Adjust parsing of data to properly show tooltip
+    var parseDate = d3.time.format("%Y-%m").parse,
+        bisectDate = d3.bisector(function(d) { return d.Period; }).left,
+        formatValue = d3.format(",.2f"),
+        formatCurrency = function(d) { return formatValue(d) + "%"; };
+
+    var x = d3.time.scale()
+        .range([0, width]);
+
+    var y = d3.scale.linear()
+        .range([height, 0]);
+
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("bottom");
+
+    var yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left");
+
+    var line = d3.svg.line()
+        .x(function(d) { return x(d.Period); })
+        .y(function(d) { return y(d.FedFunds); });
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    d3.csv("data/economy.csv", function(error, data) {
+        if (error) throw error;
+        console.log(data);
+
+        data.forEach(function(d) {
+            d.Period = parseDate(d.Period);
+            d.FedFunds = +d.FedFunds;
+        });
+
+        x.domain(d3.extent(data, function(d) { return d.Period; }));
+        y.domain(d3.extent(data, function(d) { return d.FedFunds; }));
+
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxis)
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 6)
+            .attr("dy", ".71em")
+            .style("text-anchor", "end")
+            .text("Fed Rate (%)");
+
+        // Start Animation on Click
+        d3.select("#start").on("click", function() {
+            var path = svg.append("path")
+                .datum(data)
+                .attr("class", "line")
+                .attr("d", line);
+
+            // Variable to Hold Total Length
+            var totalLength = path.node().getTotalLength();
+
+            // Set Properties of Dash Array and Dash Offset and initiate Transition
+            path
+                .attr("stroke-dasharray", totalLength + " " + totalLength)
+                .attr("stroke-dashoffset", totalLength)
+                .transition() // Call Transition Method
+                .duration(4000) // Set Duration timing (ms)
+                .ease("linear") // Set Easing option
+                .attr("stroke-dashoffset", 0); // Set final value of dash-offset for transition
+
+            // Create SVG for Tooltip and Circle on Mouseover
+            var focus = svg.append("g")
+                .attr("class", "focus")
+                .style("display", "none");
+
+            // Append a circle to show on Mouseover
+            focus.append("circle")
+                .attr("r", 4.5);
+
+            // Append text to show on Mouseover
+            focus.append("text")
+                .attr("x", 9)
+                .attr("dy", ".35em");
+
+            // Append overlay rectangle as container for Circle and Tooltips
+            // that allows user to hover anywhere on graphic
+            svg.append("rect")
+                .attr("class", "overlay")
+                .attr("width", width)
+                .attr("height", height)
+                .on("mouseover", function() { focus.style("display", null); })
+                .on("mouseout", function() { focus.style("display", "none"); })
+                .on("mousemove", mousemove);
+
+            // Mousemove function that sets location and changes properties of Focus SVG
+            function mousemove() {
+                var x0 = x.invert(d3.mouse(this)[0]),
+                    i = bisectDate(data, x0, 1),
+                    d0 = data[i - 1],
+                    d1 = data[i],
+                    d = x0 - d0.Period > d1.Period - x0 ? d1 : d0;
+                focus.attr("transform", "translate(" + x(d.Period) + "," + y(d.FedFunds) + ")");
+                focus.select("text").text(formatCurrency(d.FedFunds));
+            }
+
+        });
+
+        // Reset Animation
+        d3.select("#reset").on("click", function() {
+            d3.select(".line").remove();
+        });
+    });
+
+</script>
+</div>
+
+<div id="chart2">
+
+<button id="start2" style="position: absolute; margin-left: 6px; margin-top: 6px;">S&P 500 Change</button>
+<button id="reset2" style="position: absolute; margin-left: 150px; margin-top: 6px">Clear</button>
+<script>
+
+    var margin2 = {top: 60, right: 20, bottom: 30, left: 50},
+        width2 = 700 - margin2.left - margin2.right,
+        height2 = 365 - margin2.top - margin2.bottom;
+    //
+    // Adjust parsing of data to properly show tooltip
+    var parseDate2 = d3.time.format("%Y-%m").parse,
+        bisectDate2 = d3.bisector(function(d) { return d.Duration; }).left,
+        formatValue2 = d3.format(",.2f"),
+        formatCurrency2 = function(d) { return formatValue2(d) + "%"; };
+
+    var x2 = d3.time.scale()
+        .range([0, width2]);
+
+    var y2 = d3.scale.linear()
+        .range([height2, 0]);
+
+    var xAxis2 = d3.svg.axis()
+        .scale(x2)
+        .orient("bottom");
+
+    var yAxis2 = d3.svg.axis()
+        .scale(y2)
+        .orient("left");
+
+    var line2 = d3.svg.line()
+        .x(function(d) { return x2(d.Duration); })
+        .y(function(d) { return y2(d.SP500); });
+
+    var svg2 = d3.select("body").append("svg")
+        .attr("width", width2 + margin2.left + margin2.right)
+        .attr("height", height2 + margin2.top + margin2.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+    d3.csv("data/eco2.csv", function(error, data) {
+        if (error) throw error;
+        console.log(data);
+
+        data.forEach(function(d) {
+            d.Duration = parseDate2(d.Duration);
+            d.SP500 = +d.SP500;
+        });
+
+        x2.domain(d3.extent(data, function(d) { return d.Duration; }));
+        y2.domain(d3.extent(data, function(d) { return d.SP500; }));
+
+        svg2.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height2 + ")")
+            .call(xAxis2);
+
+        svg2.append("g")
+            .attr("class", "y axis")
+            .call(yAxis2)
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 6)
+            .attr("dy", ".71em")
+            .style("text-anchor", "end")
+            .text("S&P 500");
+
+        // Start Animation on Click
+        d3.select("#start2").on("click", function() {
+            var path2 = svg2.append("path")
+                .datum(data)
+                .attr("class", "line")
+                .attr("d", line2);
+
+            // Variable to Hold Total Length
+            var totalLength2 = path2.node().getTotalLength();
+
+            // Set Properties of Dash Array and Dash Offset and initiate Transition
+            path2
+                .attr("stroke-dasharray", totalLength2 + " " + totalLength2)
+                .attr("stroke-dashoffset", totalLength2)
+                .transition() // Call Transition Method
+                .duration(4000) // Set Duration timing (ms)
+                .ease("linear") // Set Easing option
+                .attr("stroke-dashoffset", 0); // Set final value of dash-offset for transition
+
+            // Create SVG for Tooltip and Circle on Mouseover
+            var focus2 = svg2.append("g")
+                .attr("class", "focus")
+                .style("display", "none");
+
+            // Append a circle to show on Mouseover
+            focus2.append("circle")
+                .attr("r", 4.5);
+
+            // Append text to show on Mouseover
+            focus2.append("text")
+                .attr("x", 9)
+                .attr("dy", ".35em");
+
+            // Append overlay rectangle as container for Circle and Tooltips
+            // that allows user to hover anywhere on graphic
+            svg2.append("rect")
+                .attr("class", "overlay")
+                .attr("width", width2)
+                .attr("height", height2)
+                .on("mouseover", function() { focus2.style("display", null); })
+                .on("mouseout", function() { focus2.style("display", "none"); })
+                .on("mousemove", mousemove2);
+
+            // Mousemove function that sets location and changes properties of Focus SVG
+            function mousemove2() {
+                var x02 = x2.invert(d3.mouse(this)[0]),
+                    i2 = bisectDate2(data, x02, 1),
+                    d02 = data[i2 - 1],
+                    d12 = data[i2],
+                    d2 = x02 - d02.Duration > d12.Duration - x02 ? d12 : d02;
+                focus2.attr("transform", "translate(" + x2(d2.Duration) + "," + y2(d2.SP500) + ")");
+                focus2.select("text").text(formatCurrency2(d2.SP500));
+            }
+
+        });
+
+        // Reset Animation
+        d3.select("#reset2").on("click", function() {
+            d3.select(".line").remove();
+        });
+    });
+
+
+</script>
+</div>
+</body>
