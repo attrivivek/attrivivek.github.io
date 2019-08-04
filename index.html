@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+    body {
+        font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
+
+    .x.axis path {
+        display: none;
+    }
+
+    .line {
+        fill: none;
+        /*stroke: steelblue;*/
+        stroke: steelblue;
+        stroke-width: 2px;
+    }
+
+    .overlay {
+        fill: none;
+        pointer-events: all;
+    }
+
+    .focus circle {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 1px;
+    }
+
+    svg {
+        border: solid 1px blue;
+        align: center;
+    }
+</style>
+
+
+
+<head>
+    <title>Fed Rate and US Economy</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+
+</head>
+
+<body>
+
+<h1 align="center">
+    <br>
+    How Fed Rates affected S&P 500
+
+</h1>
+
+
+<p>
+
+    <br><br>
+    The Great Recession began in December 2007 and ended in June 2009, which makes it the longest recession since World War II. Beyond its duration, the Great Recession was notably severe in several respects. Real gross domestic product (GDP) fell 4.3 percent from its peak in 2007Q4 to its trough in 2009Q2, the largest decline in the postwar era (based on data as of October 2013). The unemployment rate, which was 5 percent in December 2007, rose to 9.5 percent in June 2009, and peaked at 10 percent in October 2009.
+    Find more information on great recession.
+    <a href="https://www.federalreservehistory.org/essays/great_recession_of_200709" >Here</a>
+    <br>
+    <br>
+    During the Recession Fed Rate was cut which bailed out the economy and indices like S&P started getting stabilizing.
+    Before that indices were continuously dropping. Also as the Fed rate kept down the S&P 500 index kept on increasing and eventually US economy got back on track.
+    <br>
+    Click below button for more details.
+    <br>
+</p>
+
+<div id="buttonHolder" style="text-align: center;">
+<input type="button" align="center" value="Lets Dive in" onclick="window.location.href = 'chart2.html'"/>
+
+</div>
+
+</body>
